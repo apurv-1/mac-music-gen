@@ -16,9 +16,16 @@ All of these allow commercial use of the generated music.
 Findings, and what mac-music-gen does about each:
 
 - **Silent CPU fallback.** If the requested device is missing, ACE-Step logs a warning and loads on the CPU.
-  mac-music-gen checks the device ACE-Step reports after loading and stops if it differs from the one requested.
+  mac-music-gen's worker process checks that PyTorch MPS and MLX Metal are both available before loading, and afterwards checks the device ACE-Step reports and the text encoder's device.
+  Any mismatch is an error unless the caller passed `--allow-cpu`.
+- **Silent MLX fallback.** `_init_mlx_dit` and `_init_mlx_vae` catch every exception and switch to PyTorch with a log line.
+  MLX and PyTorch draw their noise differently, so a silent switch would also change what a seed produces.
+  The worker requires `use_mlx_dit` and `use_mlx_vae` to both be true on the GPU path.
 - **Unpinned auto-download.** If any of four model folders is missing, ACE-Step downloads the whole weights repository from its moving `main` branch.
-  mac-music-gen downloads revision `19671f406d603126926c1b7e2adc169acbcade22` itself, and generates with `HF_HUB_OFFLINE=1`, so ACE-Step cannot download anything.
+  mac-music-gen downloads revision `19671f406d603126926c1b7e2adc169acbcade22` itself.
+  The model then runs in a child process started with `HF_HUB_OFFLINE=1`, so ACE-Step cannot download anything.
+  A child process is needed because `huggingface_hub` reads that variable once, when it is first imported.
+  Setting it inside a host program that had already imported `huggingface_hub` would do nothing.
 - **`trust_remote_code=True`.** ACE-Step loads its DiT through `transformers.AutoModel` with remote code enabled, which runs the `.py` files inside the checkpoint folder.
   Before loading, ACE-Step overwrites those files with copies from its own installed package when they differ.
   So the code that runs is the pinned, audited package code.
