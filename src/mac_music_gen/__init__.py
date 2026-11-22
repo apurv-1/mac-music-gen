@@ -1,3 +1,31 @@
-"""mac-music-gen: background beds for short vertical explainer reels, generated on the local GPU."""
+"""mac-music-gen: local text-to-music on the Mac's GPU, tuned for background music."""
 
-__version__ = "0.1.0"
+from .api import Bed, Diagnosis, doctor, fetch_weights, generate, master_file, package_version
+from .errors import (
+    EngineError,
+    EngineNotInstalled,
+    GpuUnavailable,
+    InvalidRequest,
+    MacMusicGenError,
+    WeightsMissing,
+)
+from .master import Mastering, Report
+
+__version__ = package_version()
+
+__all__ = [
+    "Bed",
+    "Diagnosis",
+    "EngineError",
+    "EngineNotInstalled",
+    "GpuUnavailable",
+    "InvalidRequest",
+    "MacMusicGenError",
+    "Mastering",
+    "Report",
+    "WeightsMissing",
+    "doctor",
+    "fetch_weights",
+    "generate",
+    "master_file",
+]

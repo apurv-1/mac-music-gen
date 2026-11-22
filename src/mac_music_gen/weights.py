@@ -13,12 +13,19 @@ when any component is missing. Fetching the pinned revision here first is what s
 from __future__ import annotations
 
 import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
+from .errors import WeightsMissing
+
+# The ACE-Step code commit installed by the `gpu` extra. pyproject.toml, NOTICE and AUDIT.md
+# repeat it; tests/test_pins.py fails if they disagree.
+ACESTEP_COMMIT = "dce621408bee8c31b4fcf4811682eb9359e1bc94"  # tag v0.1.8
 REPO_ID = "ACE-Step/Ace-Step1.5"
 REVISION = "19671f406d603126926c1b7e2adc169acbcade22"  # main on 22 Nov 2026
 DOWNLOAD_GB = 10.1
+FREE_GB_NEEDED = 11.0
 # ACE-Step refuses to start unless all four exist. The 1.7B language model is not used for
 # instrumental beds, but its presence check is part of ACE-Step, so it is fetched too.
 COMPONENTS = ("acestep-v15-turbo", "vae", "Qwen3-Embedding-0.6B", "acestep-5Hz-lm-1.7B")
@@ -26,17 +33,14 @@ DIT_MODEL = "acestep-v15-turbo"
 MARKER = ".mac-music-gen-complete"
 
 
-class WeightsMissing(RuntimeError):
-    pass
-
-
 @dataclass(frozen=True)
 class Store:
     root: Path
 
     @classmethod
-    def default(cls) -> Store:
-        home = os.environ.get("MAC_MUSIC_GEN_HOME")
+    def default(cls, home: str | Path | None = None) -> Store:
+        """The cache folder: `home` if given, else $MAC_MUSIC_GEN_HOME, else ~/.cache/mac-music-gen."""
+        home = home or os.environ.get("MAC_MUSIC_GEN_HOME")
         base = Path(home).expanduser() if home else Path.home() / ".cache" / "mac-music-gen"
         return cls(base)
 
@@ -63,6 +67,11 @@ class Store:
         from huggingface_hub import snapshot_download
 
         self.checkpoints.mkdir(parents=True, exist_ok=True)
+        free_gb = shutil.disk_usage(self.checkpoints).free / 1e9
+        if free_gb < FREE_GB_NEEDED:
+            raise WeightsMissing(
+                f"only {free_gb:.1f} GB free at {self.checkpoints}; the weights need about {FREE_GB_NEEDED:g} GB"
+            )
         snapshot_download(
             repo_id=REPO_ID,
             revision=REVISION,

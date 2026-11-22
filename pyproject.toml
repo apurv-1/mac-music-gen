@@ -1,6 +1,6 @@
 [project]
 name = "mac-music-gen"
-version = "0.1.0"
+version = "0.2.0"
 description = "A local Suno for your Mac: text-to-music on the Apple Silicon GPU, offline, with commercially usable weights."
 readme = "README.md"
 license = "MIT"
@@ -53,6 +53,11 @@ environments = ["sys_platform == 'darwin' and platform_machine == 'arm64'"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = '-m "not gpu"'
+markers = [
+    "gpu: real generation on the Mac GPU; run in your own terminal with `pytest -m gpu`",
+    "engine: checks the installed ACE-Step API; needs the gpu extra but no GPU",
+]
 
 [tool.ruff]
 line-length = 120

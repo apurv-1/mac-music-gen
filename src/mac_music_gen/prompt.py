@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .errors import InvalidRequest
+
 # ACE-Step's own convention for "no vocals". Its `instrumental` flag is not read on the
 # text-to-music path that runs without the language model, so the lyrics tag is what
 # actually keeps the voice out.
@@ -53,16 +55,16 @@ def build(
     """
     prompt = " ".join(prompt.split())
     if not prompt:
-        raise ValueError("the prompt is empty; describe the mood, for example 'calm lo-fi piano'")
+        raise InvalidRequest("the prompt is empty; describe the mood, for example 'calm lo-fi piano'")
     if bpm is not None and not MIN_BPM <= bpm <= MAX_BPM:
-        raise ValueError(f"bpm must be between {MIN_BPM} and {MAX_BPM}, got {bpm}")
+        raise InvalidRequest(f"bpm must be between {MIN_BPM} and {MAX_BPM}, got {bpm}")
 
     vocals = bool(lyrics and lyrics.strip())
     if vocals:
         caption = prompt
         lyric_text = lyrics.strip()
         if len(lyric_text) > MAX_LYRICS_CHARS:
-            raise ValueError(f"lyrics are {len(lyric_text)} characters; the model reads at most {MAX_LYRICS_CHARS}")
+            raise InvalidRequest(f"lyrics are {len(lyric_text)} characters; the model reads at most {MAX_LYRICS_CHARS}")
     else:
         lowered = prompt.lower()
         extra = [d for d in BED_DESCRIPTORS if d not in lowered]
@@ -72,7 +74,7 @@ def build(
     if bpm is not None and f"{bpm} bpm" not in caption.lower():
         caption = f"{caption}, {bpm} bpm"
     if len(caption) > MAX_CAPTION_CHARS:
-        raise ValueError(
+        raise InvalidRequest(
             f"the caption is {len(caption)} characters after adding the bed descriptors; "
             f"shorten the prompt so it stays under {MAX_CAPTION_CHARS}"
         )

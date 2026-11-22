@@ -26,13 +26,13 @@ def test_hits_loudness_target_and_ceiling():
 
 
 def test_custom_target():
-    _, rep = master.master(bed(20), SR, 20, master.Settings(lufs=-18.0))
+    _, rep = master.master(bed(20), SR, 20, master.Mastering(lufs=-18.0))
     assert rep.integrated_lufs == pytest.approx(-18.0, abs=0.5)
 
 
 def test_leveller_tames_a_sudden_swell():
     raw = bed(30, swell_db=10)
-    plain = master.master(raw, SR, 30, master.Settings(level_range_db=0))[1]
+    plain = master.master(raw, SR, 30, master.Mastering(level_range_db=0))[1]
     levelled = master.master(raw, SR, 30)[1]
     assert levelled.short_term_spread_db < plain.short_term_spread_db - 3
 
@@ -53,7 +53,7 @@ def test_exact_length_when_source_is_longer_or_shorter():
 
 def test_loop_point_is_seamless():
     source = bed(23, seed=1)
-    out, _ = master.master(source, SR, 20, master.Settings(loop=True, loop_crossfade=2.0))
+    out, _ = master.master(source, SR, 20, master.Mastering(loop=True, loop_crossfade=2.0))
     assert out.shape[0] == 20 * SR
     # The jump from the last sample back to the first must look like any other step.
     wrap = np.abs(out[0] - out[-1]).max()
@@ -65,7 +65,7 @@ def test_loop_point_is_seamless():
 
 def test_loop_needs_enough_source():
     with pytest.raises(ValueError, match="needs"):
-        master.master(bed(20.5), SR, 20, master.Settings(loop=True, loop_crossfade=2.0))
+        master.master(bed(20.5), SR, 20, master.Mastering(loop=True, loop_crossfade=2.0))
 
 
 def test_silence_is_rejected():
@@ -73,16 +73,15 @@ def test_silence_is_rejected():
         master.master(np.zeros((10 * SR, 2)), SR, 10)
 
 
-def test_accepts_channels_first_like_acestep():
-    x = bed(12).T.astype(np.float32)  # (2, samples)
-    out, rep = master.master(x, SR, 12)
-    assert out.shape == (12 * SR, 2)
-    assert rep.channels == 2
+def test_mono_input_becomes_one_channel():
+    out, rep = master.master(bed(12)[:, 0], SR, 12)
+    assert out.shape == (12 * SR, 1)
+    assert rep.channels == 1
 
 
 def test_fades_longer_than_track_are_rejected():
-    with pytest.raises(ValueError, match="longer than"):
-        master.master(bed(12), SR, 3, master.Settings(fade_in=2, fade_out=2))
+    with pytest.raises(ValueError, match="do not fit"):
+        master.master(bed(12), SR, 3, master.Mastering(fade_in=2, fade_out=2))
 
 
 def test_write_and_read_roundtrip(tmp_path):

@@ -26,11 +26,13 @@ import pyloudnorm as pyln
 import soundfile as sf
 from scipy import ndimage, signal
 
+from .errors import InvalidRequest
+
 SILENCE_DB = -60.0
 
 
 @dataclass(frozen=True)
-class Settings:
+class Mastering:
     lufs: float = -14.0
     ceiling_db: float = -1.0
     fade_in: float = 0.5
@@ -66,16 +68,30 @@ def write(path: str | Path, audio: np.ndarray, sr: int) -> None:
 
 
 def as_2d(audio: np.ndarray) -> np.ndarray:
-    """Return float64 audio shaped (samples, channels)."""
+    """Return float64 audio shaped (samples, channels). Mono 1-D input becomes one channel."""
     a = np.asarray(audio, dtype=np.float64)
     if a.ndim == 1:
         return a[:, None]
     if a.ndim != 2:
-        raise ValueError(f"audio must be 1-D or 2-D, got shape {a.shape}")
-    # ACE-Step returns (channels, samples); anything with few rows and many columns is that.
-    if a.shape[0] <= 8 < a.shape[1]:
-        a = a.T
+        raise InvalidRequest(f"audio must be 1-D or (samples, channels), got shape {a.shape}")
     return np.ascontiguousarray(a)
+
+
+def validate(settings: Mastering, seconds: float) -> None:
+    """Reject settings that cannot work for this length, before any audio is made."""
+    if seconds <= 0:
+        raise InvalidRequest(f"the length must be positive, got {seconds:g} s")
+    if not -40 <= settings.lufs <= -5:
+        raise InvalidRequest(f"a loudness target of {settings.lufs:g} LUFS is outside -40 to -5")
+    if settings.ceiling_db > 0:
+        raise InvalidRequest(f"the true-peak ceiling must be at or below 0 dBTP, got {settings.ceiling_db:g}")
+    if settings.loop:
+        if not 0 <= settings.loop_crossfade < seconds:
+            raise InvalidRequest(f"the loop crossfade must be shorter than the {seconds:g} s bed")
+    elif settings.fade_in < 0 or settings.fade_out < 0 or settings.fade_in + settings.fade_out > seconds:
+        raise InvalidRequest(
+            f"fades of {settings.fade_in:g} s and {settings.fade_out:g} s do not fit a {seconds:g} s bed"
+        )
 
 
 def highpass(x: np.ndarray, sr: int, hz: float) -> np.ndarray:
@@ -124,7 +140,7 @@ def fit_length(x: np.ndarray, sr: int, seconds: float, loop: bool, crossfade_s: 
         return np.concatenate([x, np.zeros((n - len(x), x.shape[1]))])
     xf = int(round(crossfade_s * sr))
     if len(x) < n + xf:
-        raise ValueError(
+        raise InvalidRequest(
             f"a {seconds:g} s loop with a {crossfade_s:g} s crossfade needs {(n + xf) / sr:.2f} s of source, "
             f"got {len(x) / sr:.2f} s"
         )
@@ -140,7 +156,7 @@ def fit_length(x: np.ndarray, sr: int, seconds: float, loop: bool, crossfade_s: 
 def fades(x: np.ndarray, sr: int, fade_in: float, fade_out: float) -> np.ndarray:
     n_in, n_out = int(fade_in * sr), int(fade_out * sr)
     if n_in + n_out > len(x):
-        raise ValueError(f"fades of {fade_in:g} s and {fade_out:g} s are longer than the {len(x) / sr:.2f} s track")
+        raise InvalidRequest(f"fades of {fade_in:g} s and {fade_out:g} s are longer than the {len(x) / sr:.2f} s track")
     y = x.copy()
     if n_in:
         y[:n_in] *= (0.5 - 0.5 * np.cos(np.linspace(0, np.pi, n_in)))[:, None]
@@ -163,7 +179,7 @@ def true_peak_db(x: np.ndarray) -> float:
 def normalise(x: np.ndarray, sr: int, lufs: float) -> np.ndarray:
     current = integrated_lufs(x, sr)
     if not np.isfinite(current):
-        raise ValueError("the audio is silent, so there is nothing to normalise")
+        raise InvalidRequest("the audio is silent, so there is nothing to normalise")
     return x * 10 ** ((lufs - current) / 20)
 
 
@@ -215,9 +231,10 @@ def report(x: np.ndarray, sr: int) -> Report:
     )
 
 
-def master(audio: np.ndarray, sr: int, seconds: float, settings: Settings | None = None) -> tuple[np.ndarray, Report]:
+def master(audio: np.ndarray, sr: int, seconds: float, settings: Mastering | None = None) -> tuple[np.ndarray, Report]:
     """Run the whole chain and return the finished bed with its measurements."""
-    settings = settings or Settings()
+    settings = settings or Mastering()
+    validate(settings, seconds)
     x = as_2d(audio)
     x = highpass(x, sr, settings.highpass_hz)
     x = level(x, sr, settings.level_window, settings.level_range_db)
