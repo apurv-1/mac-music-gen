@@ -1,0 +1,16 @@
+mac-music-gen
+Copyright (c) 2026 Apurv Gupta
+Licensed under the MIT License (see LICENSE).
+
+This repository contains no code copied from other projects.
+
+Third-party software it uses at run time, installed as dependencies and not
+redistributed here:
+
+- ACE-Step 1.5 (https://github.com/ace-step/ACE-Step-1.5), MIT License,
+  Copyright (c) the ACE-Step authors. Used as a library at commit
+  dce621408bee8c31b4fcf4811682eb9359e1bc94 (tag v0.1.8).
+- ACE-Step 1.5 model weights (https://huggingface.co/ACE-Step/Ace-Step1.5),
+  MIT License, downloaded by `mac-music-gen fetch` at revision
+  19671f406d603126926c1b7e2adc169acbcade22. They bundle the Qwen3-Embedding-0.6B
+  text encoder, released by the Qwen team under the Apache License 2.0.

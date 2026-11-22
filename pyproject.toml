@@ -1,0 +1,62 @@
+[project]
+name = "mac-music-gen"
+version = "0.1.0"
+description = "A local Suno for your Mac: text-to-music on the Apple Silicon GPU, offline, with commercially usable weights."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.11,<3.13"
+authors = [{ name = "Apurv Gupta" }]
+keywords = ["music generation", "text-to-music", "local suno", "ace-step", "mlx", "apple silicon", "offline", "background music", "reels"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio",
+]
+# The mastering chain and the CLI need only these. They are exact pins; uv.lock pins the rest.
+dependencies = [
+    "numpy==2.3.5",
+    "scipy==1.16.3",
+    "soundfile==0.13.1",
+    "pyloudnorm==0.1.1",
+    "huggingface-hub==0.36.0",
+]
+
+[project.optional-dependencies]
+# The model. ACE-Step 1.5 is pinned to the v0.1.8 tag's commit; its tarball was audited (see AUDIT.md).
+gpu = [
+    "ace-step @ https://github.com/ace-step/ACE-Step-1.5/archive/dce621408bee8c31b4fcf4811682eb9359e1bc94.tar.gz",
+    "torch==2.9.1",
+    "torchaudio==2.9.1",
+    "mlx==0.30.0",
+]
+
+[project.scripts]
+mac-music-gen = "mac_music_gen.cli:main"
+
+[dependency-groups]
+dev = ["pytest==8.4.2", "ruff==0.14.5"]
+
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.uv]
+# ACE-Step's own requirements only resolve cleanly on Apple Silicon without CUDA indexes,
+# and Apple Silicon is what this tool is for.
+environments = ["sys_platform == 'darwin' and platform_machine == 'arm64'"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
