@@ -6,7 +6,7 @@
 ![Platform: Apple Silicon](https://img.shields.io/badge/platform-Apple%20Silicon-lightgrey.svg)
 ![Python 3.11-3.12](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)
 
-**A local Suno for your Mac.**
+**A local AI music generator for your Mac.**
 Type a prompt and get a mastered WAV, generated on your Mac's GPU.
 
 mac-music-gen runs the ACE-Step 1.5 music model on Apple Silicon through MLX and Metal.

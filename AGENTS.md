@@ -1,6 +1,6 @@
 # Agent instructions
 
-mac-music-gen is a local Suno for the Mac: a standalone CLI and Python library that generates music from a text prompt on an Apple Silicon GPU.
+mac-music-gen is a local AI music generator for the Mac: a standalone CLI and Python library that generates music from a text prompt on an Apple Silicon GPU.
 It is tuned for instrumental background beds that sit under a voice, such as reels and explainers.
 README.md explains the install, the options and the model licences.
 AUDIT.md explains why the code looks the way it does around devices, downloads and licences.

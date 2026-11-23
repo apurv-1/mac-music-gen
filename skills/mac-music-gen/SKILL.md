@@ -1,6 +1,6 @@
 ---
 name: mac-music-gen
-description: Generate original music locally on an Apple Silicon GPU with the mac-music-gen CLI, a local Suno-style text-to-music tool. Best for an instrumental background bed under a reel, explainer or voice-over (ACE-Step 1.5, MIT licensed, safe for monetised posts). Use when a reel or video needs original background music, a bed under narration, a loop of a given length, or when a licensed track should be replaced with self-generated music. Also use to master an existing track to -14 LUFS for use under a voice.
+description: Generate original music locally on an Apple Silicon GPU with the mac-music-gen CLI, a local AI music generator. Best for an instrumental background bed under a reel, explainer or voice-over (ACE-Step 1.5, MIT licensed, safe for monetised posts). Use when a reel or video needs original background music, a bed under narration, a loop of a given length, or when a licensed track should be replaced with self-generated music. Also use to master an existing track to -14 LUFS for use under a voice.
 ---
 
 # mac-music-gen

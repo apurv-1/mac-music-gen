@@ -1,13 +1,13 @@
 [project]
 name = "mac-music-gen"
 version = "0.2.0"
-description = "A local Suno for your Mac: text-to-music on the Apple Silicon GPU, offline, with commercially usable weights."
+description = "A local AI music generator for your Mac: text-to-music on the Apple Silicon GPU, offline, with commercially usable weights."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE", "NOTICE"]
 requires-python = ">=3.11,<3.13"
 authors = [{ name = "Apurv Gupta" }]
-keywords = ["music generation", "text-to-music", "local suno", "ace-step", "mlx", "apple silicon", "offline", "background music", "reels"]
+keywords = ["music generation", "text-to-music", "ai music generator", "local ai", "ace-step", "mlx", "apple silicon", "offline", "background music", "reels"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
